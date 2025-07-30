@@ -59,7 +59,7 @@ cat urls.txt | nuclei -t graphql_hunting/ -o graphql_findings.txt
 
 ## 🔐 Requirements
 
-- [Nuclei]([Nuclei](https://github.com/projectdiscovery/nuclei)
+- [Nuclei](https://github.com/projectdiscovery/nuclei)
 - [Interactsh](https://github.com/projectdiscovery/interactsh) for DNS/http exfil payloads
 - `auth_bypass.txt` wordlist (used in token brute-force)
 📦 Recommended to run with the latest [ProjectDiscovery templates](https://github.com/projectdiscovery/nuclei-templates)
