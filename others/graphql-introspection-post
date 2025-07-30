@@ -1,0 +1,43 @@
+id: graphql-introspection-post
+
+info:
+  name: GraphQL Introspection - POST Method
+  author: sethbdev
+  severity: info
+  description: |
+    Detects GraphQL endpoints that allow introspection queries via POST. If introspection is enabled, it may expose full schema and internal API structure.
+  tags: graphql,introspection,post,exposure
+  metadata:
+    verified: true
+    max-request: 1
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/graphql"
+      - "{{BaseURL}}/v1/graphql"
+      - "{{BaseURL}}/api/graphql"
+      - "{{BaseURL}}/graphql/console"
+      - "{{BaseURL}}/graphql.php"
+      - "{{BaseURL}}/query"
+      - "{{BaseURL}}/graphiql"
+
+    headers:
+      Content-Type: application/json
+
+    body: |
+      {
+        "query": "query IntrospectionQuery { __schema { types { name } } }"
+      }
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        part: body
+        words:
+          - "__schema"
+          - "types"
+        condition: and
