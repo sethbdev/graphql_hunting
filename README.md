@@ -12,6 +12,7 @@ graphql_hunting/
 ├── helpers/
 │   └── wordlists/
 │       └── auth-bypass.txt
+├── others/
 └── README.md
 ```
 
