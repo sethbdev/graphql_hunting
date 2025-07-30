@@ -89,3 +89,6 @@ Place it under:
 
 ## Notes
 Work in progress. Contributions welcome!
+
+## 🏴‍☠️ Disclaimer
+For educational use only. Do not scan systems without proper authorization.
