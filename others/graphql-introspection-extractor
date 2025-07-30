@@ -1,0 +1,40 @@
+id: graphql-introspection-extractor
+
+info:
+  name: GraphQL Introspection Extractor
+  author: sethbdev
+  severity: info
+  description: |
+    Extracts GraphQL schema types via introspection query.
+  tags: graphql,introspection,extract,post
+  metadata:
+    verified: true
+    max-request: 1
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/graphql"
+      - "{{BaseURL}}/v1/graphql"
+      - "{{BaseURL}}/api/graphql"
+
+    headers:
+      Content-Type: application/json
+
+    body: |
+      {
+        "query": "query IntrospectionQuery { __schema { types { name } } }"
+      }
+
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "__schema"
+          - "types"
+        condition: and
+
+    extractors:
+      - type: json
+        json:
+          - ".data.__schema.types[].name"
