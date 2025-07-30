@@ -6,8 +6,14 @@ A comprehensive Nuclei-based scanning suite for identifying GraphQL-related misc
 
 ## 📁 Directory Structure
 
+ ```
 graphql_hunting/
-└── graphql-nuclei-suite.yaml
+├── graphql-nuclei-suite.yaml
+├── helpers/
+│   └── wordlists/
+│       └── auth-bypass.txt
+└── README.md
+```
 
 ---
 
