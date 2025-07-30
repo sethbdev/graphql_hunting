@@ -1,0 +1,12 @@
+EXAMPLE
+
+Need to *ALL* replace contents
+
+admin
+root
+token123
+Bearer test
+
+Life is a journey
+Time is a river
+The Door is ajar
