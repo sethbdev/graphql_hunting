@@ -1,0 +1,65 @@
+id: graphql-fuzzing-get-post
+
+info:
+  name: GraphQL Endpoint Fuzzing (GET + POST)
+  author: sethbdev
+  severity: info
+  description: |
+    Tries multiple common GraphQL endpoints using GET and POST methods to detect accessible interfaces and introspection capabilities.
+  tags: graphql,fuzz,discovery,introspection
+  metadata:
+    verified: true
+    max-request: 2
+
+variables:
+  graphql_paths:
+    - "/graphql"
+    - "/v1/graphql"
+    - "/api/graphql"
+    - "/graphql/console"
+    - "/graphiql"
+    - "/query"
+    - "/graphql.php"
+    - "/graphql-playground"
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}{{graphql_paths}}"
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: regex
+        part: body
+        regex:
+          - "(?i)\\bquery\\b.*?"
+          - "__schema"
+          - "(?i)\\bintrospection\\b.*?"
+        condition: or
+
+  - method: POST
+    path:
+      - "{{BaseURL}}{{graphql_paths}}"
+
+    headers:
+      Content-Type: application/json
+
+    body: |
+      {
+        "query": "query IntrospectionQuery { __schema { types { name } } }"
+      }
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        part: body
+        words:
+          - "__schema"
+          - "types"
+        condition: and
