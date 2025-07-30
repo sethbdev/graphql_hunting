@@ -1,0 +1,62 @@
+id: graphql-full-fuzz-suite
+
+info:
+  name: GraphQL GET + POST Fuzz Suite
+  author: sethbdev
+  severity: info
+  description: |
+    Fuzzes common GraphQL paths using both GET and POST. Detects introspection, devtools, consoles.
+  tags: graphql,fuzzing,introspection,post,get
+  metadata:
+    verified: true
+    max-request: 2
+
+variables:
+  graphql_paths:
+    - "/graphql"
+    - "/graphql.php"
+    - "/v1/graphql"
+    - "/api/graphql"
+    - "/graphiql"
+    - "/graphql/console"
+    - "/query"
+    - "/graphql-devtools"
+    - "/graphql-playground"
+    - "/laravel-graphql-playground"
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}{{graphql_paths}}"
+
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: regex
+        part: body
+        regex:
+          - "(?i)(query|mutation|introspection|graphql)"
+          - "__schema"
+        condition: or
+
+  - method: POST
+    path:
+      - "{{BaseURL}}{{graphql_paths}}"
+
+    headers:
+      Content-Type: application/json
+
+    body: |
+      {
+        "query": "query IntrospectionQuery { __schema { types { name } } }"
+      }
+
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "__schema"
+          - "types"
+        condition: and
